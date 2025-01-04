@@ -10,71 +10,51 @@ interface Actor {
   notableMovies: string[];
 }
 
+interface ActorProfileProps {
+  onFavorite: (actor: Actor) => void;
+  favoriteActors: Actor[];
+}
+
 const actors: Actor[] = [
   {
     id: 1,
     name: "Leonardo DiCaprio",
     role: "Producer • Actor • Writer",
-    bio: "Few actors in the world have had a career as diverse as Leonardo DiCaprio's. DiCaprio has gone from humble beginnings in low-budget horror movies to becoming one of Hollywood's most recognized names.",
+    bio: "Few actors in the world have had a career as diverse as Leonardo DiCaprio's...",
     image:
       "https://upload.wikimedia.org/wikipedia/commons/6/6d/Leonardo_DiCaprio_January_2014.jpg",
-    notableMovies: ["Titanic", "Inception", "Blood Diamond", "The Departed"],
+    notableMovies: ["Titanic", "Inception", "Blood Diamond"],
   },
   {
     id: 2,
     name: "Mel Gibson",
     role: "Actor • Producer • Director",
-    bio: "Mel Gibson is an American-Australian actor, producer, and director, known for his roles in 'Braveheart' and 'Mad Max'.",
+    bio: "Mel Gibson is an American-Australian actor, producer, and director...",
     image:
       "https://upload.wikimedia.org/wikipedia/commons/a/a4/Mel_Gibson_Cannes_2016.jpg",
-    notableMovies: ["Braveheart", "The Patriot", "Signs", "Mad Max"],
+    notableMovies: ["Braveheart", "The Patriot", "Signs"],
   },
-  {
-    id: 3,
-    name: "Tom Cruise",
-    role: "Actor • Producer • Director",
-    bio: "Tom Cruise has been one of Hollywood's biggest names for decades, known for his roles in 'Top Gun' and 'Mission: Impossible' series.",
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/5/5f/Tom_Cruise_by_Gage_Skidmore.jpg",
-    notableMovies: [
-      "The Last Samurai",
-      "Edge of Tomorrow",
-      "Mission: Impossible",
-      "Minority Report",
-    ],
-  },
-  {
-    id: 4,
-    name: "Scarlett Johansson",
-    role: "Actress • Producer • Singer",
-    bio: "Scarlett Johansson is an award-winning actress known for her roles in 'Black Widow' and 'Lost in Translation'.",
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/1/1e/Scarlett_Johansson_2019_by_Glenn_Francis.jpg",
-    notableMovies: ["Black Widow", "Lost in Translation", "Marriage Story", "Jojo Rabbit"],
-  },
-  {
-    id: 5,
-    name: "Natalie Portman",
-    role: "Actress • Producer",
-    bio: "Natalie Portman is a celebrated actress known for her roles in 'Black Swan' and 'Thor'.",
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/f/f6/Natalie_Portman_Cannes_2015.jpg",
-    notableMovies: ["Black Swan", "Thor", "V for Vendetta", "Jackie"],
-  },
+  // Add more actors as needed.
 ];
 
-const ActorProfile: React.FC = () => {
-  const [favorites, setFavorites] = useState<number[]>([]);
+const ActorProfile: React.FC<ActorProfileProps> = ({ onFavorite, favoriteActors }) => {
+  const [popup, setPopup] = useState("");
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id]
-    );
+  const handleFavoriteClick = (actor: Actor) => {
+    onFavorite(actor);
+    const isFavorite = favoriteActors.some((fav) => fav.id === actor.id);
+    setPopup(isFavorite ? "Removed from Favorites" : "Added to Favorites");
+    setTimeout(() => setPopup(""), 2000); // Clear the message after 2 seconds
   };
 
   return (
     <div className="bg-black text-white min-h-screen py-10">
-      <h1 className="text-4xl font-bold text-center mb-10">Favorite Actors & Actresses</h1>
+      <h1 className="text-4xl font-bold text-center mb-10">Actors</h1>
+      {popup && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg">
+          {popup}
+        </div>
+      )}
       <div className="flex flex-wrap justify-center gap-8 px-4">
         {actors.map((actor) => (
           <div
@@ -88,12 +68,14 @@ const ActorProfile: React.FC = () => {
                 className="rounded-t-lg object-cover h-64 w-full"
               />
               <button
-                onClick={() => toggleFavorite(actor.id)}
+                onClick={() => handleFavoriteClick(actor)}
                 className="absolute top-4 right-4 bg-black/60 p-2 rounded-full hover:bg-black/80"
               >
                 <Heart
                   className={`w-6 h-6 ${
-                    favorites.includes(actor.id) ? "text-red-500 fill-current" : "text-white"
+                    favoriteActors.some((fav) => fav.id === actor.id)
+                      ? "text-red-500 fill-current"
+                      : "text-white"
                   }`}
                 />
               </button>

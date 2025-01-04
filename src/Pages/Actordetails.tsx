@@ -1,8 +1,9 @@
-import { Award, Instagram, Star, Twitter } from "lucide-react";
-import React from "react";
+import { Award, Heart, Instagram, Star, Twitter } from "lucide-react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 const Actordetails = () => {
+  const [favorites] = useState<number[]>([]);
   const actors = [
     {
       id: 1,
@@ -156,6 +157,10 @@ const Actordetails = () => {
   ];
   const { id } = useParams();
   const actor = actors.find((m) => m.id === Number(id)) || actors[0];
+  function toggleFavorite(id: number): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="relative h-[400px] mb-8 rounded-xl overflow-hidden">
@@ -182,6 +187,16 @@ const Actordetails = () => {
                 <div className="flex items-center gap-2">
                   <Award className="w-5 h-5 text-purple-500" />
                   <span>{actor.stats.totalAwards} Awards</span>
+                  <button
+                onClick={() => toggleFavorite(actor.id)}
+                className="absolute top-4 right-4 bg-black/60 p-2 rounded-full hover:bg-black/80"
+              >
+                <Heart
+                  className={`w-6 h-6 ${
+                    favorites.includes(actor.id) ? "text-red-500 fill-current" : "text-white"
+                  }`}
+                />
+              </button>
                 </div>
               </div>
             </div>

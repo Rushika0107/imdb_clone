@@ -6,6 +6,8 @@ import MovieList from "./Pages/MovieList.tsx";
 import MovieDetails from "./Pages/MovieDetails.tsx";
 import Toprated from "./Pages/Toprated.jsx";
 import Actordetails from "./Pages/Actordetails.tsx";
+import FavoriteActorsPage from "./Pages/FavoriteActorsPage.tsx";
+import ActorProfilesPage from "./components/ActorProfile.tsx";
 function App() {
   return (
     <BrowserRouter>

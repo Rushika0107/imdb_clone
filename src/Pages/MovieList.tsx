@@ -1,10 +1,16 @@
-import { SlidersHorizontal, Star } from "lucide-react";
-import React from "react";
+//import { Search, SlidersHorizontal, Star } from "lucide-react";
+import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+//import storage from "../utils/storage";
+import { SlidersHorizontal } from "lucide-react";
 
 const MovieList = () => {
   const [searchParams] = useSearchParams();
-  const Search = searchParams.get("search");
+  const search = searchParams.get("search");
+  const [genreFilter, setGenreFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [ratingFilter, setRatingFilter] = useState({ min: 0, max: 10 });
+
   const Movies = [
     {
       id: 1,
@@ -52,52 +58,127 @@ const MovieList = () => {
       genre: ["Crime", "Drama", "History"],
     },
   ];
+
+  const filteredMovies = Movies.filter((movie) => {
+    const genreMatch = genreFilter === "" || movie.genre.includes(genreFilter);
+    const yearMatch = yearFilter === "" || movie.year === parseInt(yearFilter);
+    const ratingMatch =
+      movie.rating >= ratingFilter.min && movie.rating <= ratingFilter.max;
+    return genreMatch && yearMatch && ratingMatch;
+  });
+
+  const handleGenreChange = (e) => setGenreFilter(e.target.value);
+  const handleYearChange = (e) => setYearFilter(e.target.value);
+  const handleRatingChange = (e) => {
+    const { name, value } = e.target;
+    setRatingFilter((prev) => ({ ...prev, [name]: parseInt(value) }));
+  };
+
+ /* const handleRatingChangeForMovie = (movieId, rating) => {
+    const ratings = storage.getRatings();
+    const index = ratings.findIndex((r) => r.movieId === movieId);
+    if (index !== -1) {
+      ratings[index].rating = rating;
+    } else {
+      ratings.push({ movieId, rating });
+    }
+    storage.setRatings(ratings);
+  }; */
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">
-          {Search ? `Search Results for "${Search}` : "Popular Movies"}
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          {search ? `Search Results for "${search}"` : "Popular Movies"}
         </h1>
-        <button className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-xl hover:bg-gray-900 transition-colors">
+        <button className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg shadow-lg hover:opacity-90 transition">
           <SlidersHorizontal /> Filters
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {Movies.map((movie) => (
-          <Link key={movie.id} to={`/movie/${movie.id}`}>
-            <div className="bg-gray-900 rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300">
-              <div className="relative aspect-video">
-                <img
-                  src={movie.image}
-                  alt={movie.title}
-                  className="w-full h-full object-cover"
+      <div className="grid md:grid-cols-4 lg:grid-cols-5 gap-8 mb-8">
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="font-semibold text-xl mb-4 text-gray-900 dark:text-white">Filters</h2>
+          <div className="flex flex-col gap-6">
+            <div>
+              <label className="block mb-2 text-gray-700 dark:text-gray-300">Genre</label>
+              <select
+                value={genreFilter}
+                onChange={handleGenreChange}
+                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-900 dark:text-gray-300"
+              >
+                <option value="">All</option>
+                <option value="Action">Action</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+                <option value="Romance">Romance</option>
+                <option value="Sci-Fi">Sci-Fi</option>
+                <option value="Biography">Biography</option>
+                <option value="Crime">Crime</option>
+                <option value="History">History</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-2 text-gray-700 dark:text-gray-300">Year</label>
+              <input
+                type="number"
+                value={yearFilter}
+                onChange={handleYearChange}
+                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-900 dark:text-gray-300"
+                placeholder="Enter year"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-gray-700 dark:text-gray-300">Rating Range</label>
+              <div className="flex gap-4">
+                <input
+                  type="number"
+                  name="min"
+                  value={ratingFilter.min}
+                  onChange={handleRatingChange}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-900 dark:text-gray-300"
+                  placeholder="Min"
                 />
-                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  <span className="text-yellow-500 font-medium">
-                    {movie.rating}
-                  </span>
-                </div>
-              </div>
-              <div className="p-4">
-                <h2 className="text-xl font-semibold justify-betwen mb-2">
-                  {movie.title}
-                </h2>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400">{movie.year}</span>
-                  <div className="flex gap-2">
-                    {movie.genre.slice(0, 2).map((g) => (
-                      <span key={g} className="text-xs px-2 py-1 bg-zinc-800 rounded-full text-zinc-300">
-                        {g}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <input
+                  type="number"
+                  name="max"
+                  value={ratingFilter.max}
+                  onChange={handleRatingChange}
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-900 dark:text-gray-300"
+                  placeholder="Max"
+                />
               </div>
             </div>
-          </Link>
-        ))}
+          </div>
+        </div>
+
+        <div className="col-span-3 lg:col-span-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredMovies.map((movie) => (
+            <div
+              key={movie.id}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+            >
+              <img src={movie.image} alt={movie.title} className="w-full h-48 object-cover" />
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {movie.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">Rating: {movie.rating}</p>
+                <p className="text-gray-600 dark:text-gray-400">Year: {movie.year}</p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Genre: {movie.genre.join(", ")}
+                </p>
+                <Link
+                  to={`/movies/${movie.id}`}
+                  className="mt-4 inline-block text-indigo-500 hover:text-indigo-600"
+                >
+                  View Details
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

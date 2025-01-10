@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Link, useParams } from "react-router-dom";
+//import WatchlistService from "../services/watchlist.service";
+
 
 const MovieDetails = () => {
   const Movies = [
@@ -182,6 +184,8 @@ const MovieDetails = () => {
   ];
   const { id } = useParams();
   const movie = Movies.find((m) => m.id === Number(id)) || Movies[0];
+  //const recommendMovies = (_userRatings, _userWatchlist, allMovies) => {
+
   return (
     <div>
       <div className="relative h-[90vh]">

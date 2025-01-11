@@ -166,7 +166,7 @@ export const searchMovies = async (query) => {
 // Fetch movie details by ID
 export const getMovieDetails = async (movieId) => {
   try {
-    const response = await tmdbApi.get(/movie/$,{movieId}); 
+    const response = await tmdbApi.get(`/movie/${movieId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching movie details:", error);
@@ -177,7 +177,7 @@ export const getMovieDetails = async (movieId) => {
 // Fetch actor details by ID
 export const getActorDetails = async (actorId) => {
   try {
-    const response = await tmdbApi.get(/person/$,{actorId});
+    const response = await tmdbApi.get(`/person/${actorId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching actor details:", error);
@@ -188,7 +188,7 @@ export const getActorDetails = async (actorId) => {
 // Fetch actor's movie credits by ID
 export const getActorMovies = async (actorId) => {
   try {
-    const response = await tmdbApi.get(/person/$,{actorId}/movie_credits);
+    const response = await tmdbApi.get(`/person/${actorId}/movie_credits`);
     return response.data.cast;
   } catch (error) {
     console.error("Error fetching actor's movie credits:", error);
@@ -197,7 +197,7 @@ export const getActorMovies = async (actorId) => {
 };
 export const getActorAwards = async (actorId) => {
   try {
-    const response = await tmdbApi.get(/person/$,{actorId}/awards);
+    const response = await tmdbApi.get(`/person/${actorId}/awards`);
     return response.data.results;
   } catch (error) {
     console.error("Error fetching actor's awards:", error);

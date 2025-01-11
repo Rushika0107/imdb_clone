@@ -1,44 +1,38 @@
 import { Star, Trophy } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
 const Toprated = () => {
-  const movies = [
-    {
-      id: 1,
-      title: "The Shawshank Redemption",
-      rating: 9.3,
-      image:
-        "https://images.unsplash.com/photo-1534809027769-b00d750a6bac?auto=format&fit=crop&w=800&q=80",
-      year: 1994,
-      votes: "2.8M",
-      rank: 1,
-    },
-    {
-      id: 2,
-      title: "The Godfather",
-      rating: 9.2,
-      image:
-        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80",
-      year: 1972,
-      votes: "2.1M",
-      rank: 2,
-    },
-    {
-      id: 3,
-      title: "The Dark Knight",
-      rating: 9.0,
-      image:
-        "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=800&q=80",
-      year: 2008,
-      votes: "2.7M",
-      rank: 3,
-    },
-  ];
+  // Define state for movies and loading status
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch top-rated movies from TMDB API
+  useEffect(() => {
+    const fetchTopRatedMovies = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/movie/top_rated?api_key=0d62be90cc24bf3a77723ca6481b2320&language=en-US&page=1`
+        );
+        setMovies(response.data.results); // Set the fetched movies
+        setLoading(false); // Set loading state to false
+      } catch (error) {
+        console.error("Error fetching top-rated movies:", error);
+        setLoading(false); // Set loading state to false in case of error
+      }
+    };
+
+    fetchTopRatedMovies();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
-        inital={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="flex items-center gap-3 mb-8"
@@ -58,11 +52,11 @@ const Toprated = () => {
               <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="flex">
                   <div className="w-16 bg-yellow-500 flex items-center justify-center text-black font-bold text-xl">
-                    #{movie.rank}
+                    #{index + 1} {/* Use index as the rank */}
                   </div>
                   <div className="relative w-48">
                     <img
-                      src={movie.image}
+                      src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
                       alt={movie.title}
                       className="w-full h-full object-cover"
                     />
@@ -75,14 +69,14 @@ const Toprated = () => {
                       <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                         <Star className="w-4 h-4 text-yellow-500 fill-current" />
                         <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {movie.rating}
+                          {movie.vote_average}
                         </span>
                       </div>
                     </div>
                     <div className="text-gray-400 dark:text-gray-200">
-                      <span>{movie.year}</span>
+                      <span>{movie.release_date.split("-")[0]}</span>
                       <span className="mx-2">•</span>
-                      <span>{movie.votes} votes</span>
+                      <span>{movie.vote_count} votes</span>
                     </div>
                   </div>
                 </div>

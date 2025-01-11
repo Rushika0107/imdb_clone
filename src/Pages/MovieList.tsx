@@ -1,8 +1,17 @@
-//import { Search, SlidersHorizontal, Star } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-//import storage from "../utils/storage";
+import axios from "axios"; // Ensure to import axios
 import { SlidersHorizontal } from "lucide-react";
+
+// Define the type for a Movie object
+interface Movie {
+  id: number;
+  title: string;
+  poster_path: string;
+  vote_average: number;
+  release_date: string;
+  genre_ids: number[];
+}
 
 const MovieList = () => {
   const [searchParams] = useSearchParams();
@@ -10,60 +19,32 @@ const MovieList = () => {
   const [genreFilter, setGenreFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
   const [ratingFilter, setRatingFilter] = useState({ min: 0, max: 10 });
+  const [movies, setMovies] = useState<Movie[]>([]); // Explicitly set the type of movies to Movie[]
+  const [loading, setLoading] = useState(true);
 
-  const Movies = [
-    {
-      id: 1,
-      title: "Dune: Part Two",
-      rating: 8.8,
-      image:
-        "https://images.unsplash.com/photo-1534809027769-b00d750a6bac?auto=format&fit=crop&w=800&q=80",
-      year: 2024,
-      genre: ["Action", "Adventure", "Sci-Fi"],
-    },
-    {
-      id: 2,
-      title: "Poor Things",
-      rating: 8.4,
-      image:
-        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80",
-      year: 2023,
-      genre: ["Comedy", "Drama", "Romance"],
-    },
-    {
-      id: 3,
-      title: "Oppenheimer",
-      rating: 8.9,
-      image:
-        "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=800&q=80",
-      year: 2023,
-      genre: ["Biography", "Drama", "History"],
-    },
-    {
-      id: 4,
-      title: "The Batman",
-      rating: 8.5,
-      image:
-        "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?auto=format&fit=crop&w=800&q=80",
-      year: 2024,
-      genre: ["Action", "Crime", "Drama"],
-    },
-    {
-      id: 5,
-      title: "Killers of the Flower Moon",
-      rating: 8.7,
-      image:
-        "https://images.unsplash.com/photo-1533928298208-27ff66555d8d?auto=format&fit=crop&w=800&q=80",
-      year: 2023,
-      genre: ["Crime", "Drama", "History"],
-    },
-  ];
+  // Fetch movies from TMDB API
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/discover/movie?api_key=0d62be90cc24bf3a77723ca6481b2320&language=en-US&page=1`
+        );
+        setMovies(response.data.results); // Set movies from TMDB API response
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching movies from TMDB:", error);
+        setLoading(false);
+      }
+    };
 
-  const filteredMovies = Movies.filter((movie) => {
-    const genreMatch = genreFilter === "" || movie.genre.includes(genreFilter);
-    const yearMatch = yearFilter === "" || movie.year === parseInt(yearFilter);
+    fetchMovies();
+  }, []);
+
+  const filteredMovies = movies.filter((movie) => {
+    const genreMatch = genreFilter === "" || movie.genre_ids.includes(parseInt(genreFilter));
+    const yearMatch = yearFilter === "" || movie.release_date.startsWith(yearFilter); // movie.release_date exists now
     const ratingMatch =
-      movie.rating >= ratingFilter.min && movie.rating <= ratingFilter.max;
+      movie.vote_average >= ratingFilter.min && movie.vote_average <= ratingFilter.max;
     return genreMatch && yearMatch && ratingMatch;
   });
 
@@ -74,16 +55,32 @@ const MovieList = () => {
     setRatingFilter((prev) => ({ ...prev, [name]: parseInt(value) }));
   };
 
- /* const handleRatingChangeForMovie = (movieId, rating) => {
-    const ratings = storage.getRatings();
-    const index = ratings.findIndex((r) => r.movieId === movieId);
-    if (index !== -1) {
-      ratings[index].rating = rating;
-    } else {
-      ratings.push({ movieId, rating });
-    }
-    storage.setRatings(ratings);
-  }; */
+  // Genre options based on TMDB genres
+  const genres = [
+    { id: 28, name: "Action" },
+    { id: 35, name: "Comedy" },
+    { id: 18, name: "Drama" },
+    { id: 10402, name: "Music" },
+    { id: 10749, name: "Romance" },
+    { id: 27, name: "Horror" },
+    { id: 53, name: "Thriller" },
+    { id: 10752, name: "War" },
+    { id: 878, name: "Sci-Fi" },
+    { id: 12, name: "Adventure" },
+    { id: 99, name: "Documentary" },
+    { id: 36, name: "History" },
+    { id: 80, name: "Crime" },
+    { id: 10751, name: "Family" },
+    { id: 10770, name: "TV Movie" },
+    { id: 10759, name: "Action & Adventure" },
+    { id: 10762, name: "Kids" },
+    { id: 10763, name: "News" },
+    { id: 10764, name: "Reality" },
+    { id: 10765, name: "Sci-Fi & Fantasy" },
+  ];
+
+  if (loading) return <div>Loading...</div>;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -96,6 +93,7 @@ const MovieList = () => {
       </div>
 
       <div className="grid md:grid-cols-4 lg:grid-cols-5 gap-8 mb-8">
+        {/* Filters Section */}
         <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <h2 className="font-semibold text-xl mb-4 text-gray-900 dark:text-white">Filters</h2>
           <div className="flex flex-col gap-6">
@@ -107,14 +105,11 @@ const MovieList = () => {
                 className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-gray-900 dark:text-gray-300"
               >
                 <option value="">All</option>
-                <option value="Action">Action</option>
-                <option value="Comedy">Comedy</option>
-                <option value="Drama">Drama</option>
-                <option value="Romance">Romance</option>
-                <option value="Sci-Fi">Sci-Fi</option>
-                <option value="Biography">Biography</option>
-                <option value="Crime">Crime</option>
-                <option value="History">History</option>
+                {genres.map((genre) => (
+                  <option key={genre.id} value={genre.id}>
+                    {genre.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -153,21 +148,26 @@ const MovieList = () => {
           </div>
         </div>
 
+        {/* Movies List Section */}
         <div className="col-span-3 lg:col-span-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredMovies.map((movie) => (
             <div
               key={movie.id}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
             >
-              <img src={movie.image} alt={movie.title} className="w-full h-48 object-cover" />
+              <img
+                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                alt={movie.title}
+                className="w-full h-48 object-cover"
+              />
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {movie.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Rating: {movie.rating}</p>
-                <p className="text-gray-600 dark:text-gray-400">Year: {movie.year}</p>
+                <p className="text-gray-600 dark:text-gray-400">Rating: {movie.vote_average}</p>
+                <p className="text-gray-600 dark:text-gray-400">Year: {movie.release_date.split("-")[0]}</p>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Genre: {movie.genre.join(", ")}
+                  Genre: {movie.genre_ids.map((id) => genres.find((g) => g.id === id)?.name).join(", ")}
                 </p>
                 <Link
                   to={`/movies/${movie.id}`}

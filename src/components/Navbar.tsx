@@ -8,6 +8,9 @@ const Navbar = ({ toggleDarkMode, darkMode }) => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  const favorites = storage.getFavorites();
+console.log(favorites); // Log the favorites array to see what's stored
+ 
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {

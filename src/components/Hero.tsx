@@ -1,39 +1,63 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Play, Star, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const featuredMovies = [
-  {
-    id: 1,
-    title: "Dune: Part Two",
-    rating: 8.8,
-    releaseDate: "March 1, 2024",
-    description:
-      "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he must prevent a terrible future only he can foresee.",
-    image:
-      "https://images.unsplash.com/photo-1534809027769-b00d750a6bac?auto=format&fit=crop&w=2000&q=80",
-  },
-  {
-    id: 2,
-    title: "Oppenheimer",
-    rating: 8.9,
-    releaseDate: "July 21, 2023",
-    description:
-      "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb. A gripping tale of genius, conscience, and the price of scientific progress.",
-    image:
-      "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=2000&q=80",
-  },
-];
+const TMDB_API_KEY = "0d62be90cc24bf3a77723ca6481b2320";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 
 const Hero = () => {
-  const [currentMovie, setCurrentMovie] = React.useState(0);
+  const [featuredMovies, setFeaturedMovies] = useState<any[]>([]);
+  const [currentMovie, setCurrentMovie] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Fetch featured movies (e.g., "now_playing" or "popular" movies)
+    const fetchMovies = async () => {
+      try {
+        const response = await axios.get(
+          `${TMDB_BASE_URL}/movie/now_playing`,
+          {
+            params: {
+              api_key: TMDB_API_KEY,
+              language: "en-US",
+              page: 1,
+            },
+          }
+        );
+
+        const movies = response.data.results.map((movie: any) => ({
+          id: movie.id,
+          title: movie.title,
+          rating: movie.vote_average,
+          releaseDate: new Date(movie.release_date).toLocaleDateString(),
+          description: movie.overview,
+          image: `${TMDB_IMAGE_BASE_URL}${movie.backdrop_path || movie.poster_path}`,
+        }));
+
+        setFeaturedMovies(movies.slice(0, 5)); // Limit to top 5 movies
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentMovie((prev) => (prev + 1) % featuredMovies.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, []);
+  }, [featuredMovies]);
+
+  if (featuredMovies.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[90vh] bg-black text-white">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   const movie = featuredMovies[currentMovie];
 

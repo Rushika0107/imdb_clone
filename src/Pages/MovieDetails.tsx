@@ -1,360 +1,532 @@
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ThumbsUp, ThumbsDown, Edit, Trash } from "lucide-react"; 
+import axios from "axios";
+import api from "../api";
 import {
-  Award,
-  BarChart3,
+  Play,
+  Film,
   Calendar,
-  Clock,
   DollarSign,
   Globe,
-  Heart,
-  Play,
-  Share2,
+  Clock,
+  Languages,
   Star,
 } from "lucide-react";
-import React from "react";
-import { Link, useParams } from "react-router-dom";
-//import WatchlistService from "../services/watchlist.service";
+
+interface CastMember {
+  id: number;
+  name: string;
+  role: string;
+  image: string;
+}
+
+interface Review {
+  username: string;
+  text: string;
+  date: string;
+  upvotes: number;
+  downvotes: number;
+  isEditing: boolean; // Whether the review is being edited
+}
+
+interface Movie {
+  id: number;
+  title: string;
+  rating: number;
+  duration: string;
+  genre: string[];
+  director: string;
+  description: string;
+  image: string;
+  backdrop: string | null;
+  trailer: string | null;
+  cast: CastMember[];
+  boxOffice: string;
+  releaseDate: string;
+  country: string;
+  language: string;
+  userRatings: number[]; // Store user ratings
+  reviews: Review[]; // Store user reviews
+}
+
+const TMDB_API_KEY = "0d62be90cc24bf3a77723ca6481b2320";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 
-const MovieDetails = () => {
-  const Movies = [
-    {
-      id: 1,
-      title: "Dune: Part Two",
-      rating: 8.8,
-      year: 2024,
-      duration: "166 min",
-      genre: ["Action", "Adventure", "Drama", "Sci-Fi"],
-      director: "Denis Villeneuve",
-      description:
-        "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he endeavors to prevent a terrible future only he can foresee.",
-      image:
-        "https://images.unsplash.com/photo-1534809027769-b00d750a6bac?auto=format&fit=crop&w=2000&q=80",
-      backdrop:
-        "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=2000&q=80",
-      cast: [
-        {
-          id: 1,
-          name: "Timothée Chalamet",
-          role: "Paul Atreides",
-          image:
-            "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
-          bio: "Rising star known for his compelling performances",
-        },
-        {
-          id: 2,
-          name: "Zendaya",
-          role: "Chani",
-          image:
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-          bio: "Multi-talented actress and fashion icon",
-        },
-      ],
-      trailer: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      awards: ["Academy Award Nominee", "Golden Globe Nominee"],
-      boxOffice: "$494.7M",
-      language: "English",
-      productionCompany: "Legendary Entertainment",
-      releaseDate: "2024-03-01",
-      metacriticScore: 81,
-      rottenTomatoesScore: 94,
-    },
-    {
-      id: 2,
-      title: "Oppenheimer",
-      rating: 8.4,
-      year: 2023,
-      duration: "180 min",
-      genre: ["Biography", "Drama", "History"],
-      director: "Christopher Nolan",
-      description:
-        "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II, exploring the moral complexities and consequences of scientific discovery.",
-      image:
-        "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=2000&q=80",
-      backdrop:
-        "https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?auto=format&fit=crop&w=2000&q=80",
-      cast: [
-        {
-          id: 3,
-          name: "Cillian Murphy",
-          role: "J. Robert Oppenheimer",
-          image:
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
-          bio: "Versatile actor known for intense performances",
-        },
-        {
-          id: 4,
-          name: "Emily Blunt",
-          role: "Katherine Oppenheimer",
-          image:
-            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
-          bio: "Acclaimed actress with numerous awards",
-        },
-      ],
-      trailer: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      awards: ["Academy Award Winner", "BAFTA Winner", "Golden Globe Winner"],
-      boxOffice: "$957.8M",
-      language: "English",
-      productionCompany: "Universal Pictures",
-      releaseDate: "2023-07-21",
-      metacriticScore: 89,
-      rottenTomatoesScore: 93,
-    },
-    {
-      id: 3,
-      title: "Poor Things",
-      rating: 8.3,
-      year: 2023,
-      duration: "141 min",
-      genre: ["Comedy", "Drama", "Romance", "Sci-Fi"],
-      director: "Yorgos Lanthimos",
-      description:
-        "The incredible tale of Bella Baxter, a young woman brought back to life by the brilliant and unorthodox scientist Dr. Godwin Baxter. Under his protection, Bella is eager to learn.",
-      image:
-        "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=2000&q=80",
-      backdrop:
-        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=2000&q=80",
-      cast: [
-        {
-          id: 5,
-          name: "Emma Stone",
-          role: "Bella Baxter",
-          image:
-            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80",
-          bio: "Academy Award-winning actress",
-        },
-        {
-          id: 6,
-          name: "Willem Dafoe",
-          role: "Dr. Godwin Baxter",
-          image:
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
-          bio: "Legendary actor with diverse roles",
-        },
-      ],
-      trailer: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      awards: ["Academy Award Winner", "Venice Film Festival Winner"],
-      boxOffice: "$102.3M",
-      language: "English",
-      productionCompany: "Searchlight Pictures",
-      releaseDate: "2023-12-08",
-      metacriticScore: 87,
-      rottenTomatoesScore: 92,
-    },
-    {
-      id: 4,
-      title: "The Zone of Interest",
-      rating: 7.9,
-      year: 2023,
-      duration: "105 min",
-      genre: ["Drama", "History", "War"],
-      director: "Jonathan Glazer",
-      description:
-        "The commandant of Auschwitz, Rudolf Höss, and his wife Hedwig, strive to build a dream life for their family in a house and garden next to the camp.",
-      image:
-        "https://images.unsplash.com/photo-1533928298208-27ff66555d8d?auto=format&fit=crop&w=2000&q=80",
-      backdrop:
-        "https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?auto=format&fit=crop&w=2000&q=80",
-      cast: [
-        {
-          id: 7,
-          name: "Christian Friedel",
-          role: "Rudolf Höss",
-          image:
-            "https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&w=200&q=80",
-          bio: "German actor and musician",
-        },
-        {
-          id: 8,
-          name: "Sandra Hüller",
-          role: "Hedwig Höss",
-          image:
-            "https://images.unsplash.com/photo-1557296387-5358ad7997bb?auto=format&fit=crop&w=200&q=80",
-          bio: "Award-winning German actress",
-        },
-      ],
-      trailer: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      awards: ["Academy Award Winner", "Cannes Film Festival Winner"],
-      boxOffice: "$27.1M",
-      language: "German",
-      productionCompany: "A24",
-      releaseDate: "2024-01-31",
-      metacriticScore: 94,
-      rottenTomatoesScore: 91,
-    },
-  ];
-  const { id } = useParams();
-  const movie = Movies.find((m) => m.id === Number(id)) || Movies[0];
-  //const recommendMovies = (_userRatings, _userWatchlist, allMovies) => {
+const MovieDetails: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null); // Track user rating (1-10)
+  const [reviewText, setReviewText] = useState(""); // Review text input
+  const [username, setUsername] = useState(""); // Review username input
+
+  // Sort option state
+  const [sortOption, setSortOption] = useState<'mostHelpful' | 'mostRecent'>('mostRecent');
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchMovieDetails = async () => {
+      try {
+        const { data } = await axios.get(
+          `${TMDB_BASE_URL}/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=credits,videos`
+        );
+
+        const movieDetails: Movie = {
+          id: data.id,
+          title: data.title,
+          rating: data.vote_average,
+          duration: `${data.runtime || 0} min`,
+          genre: data.genres.map((g: any) => g.name),
+          director:
+            data.credits?.crew?.find((c: any) => c.job === "Director")?.name ||
+            "Unknown",
+          description: data.overview || "No description available.",
+          image: data.poster_path
+            ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
+            : "/placeholder-image.jpg",
+          backdrop: data.backdrop_path
+            ? `https://image.tmdb.org/t/p/original${data.backdrop_path}`
+            : null,
+          cast: data.credits?.cast
+            ? data.credits.cast.slice(0, 8).map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                role: c.character,
+                image: c.profile_path
+                  ? `https://image.tmdb.org/t/p/w200${c.profile_path}`
+                  : "/placeholder-profile.jpg",
+              }))
+            : [],
+          trailer:
+            data.videos?.results?.find((v: any) => v.type === "Trailer")?.key ||
+            null,
+          boxOffice: data.revenue
+            ? `$${(data.revenue / 1e6).toFixed(1)}M`
+            : "N/A",
+          releaseDate: data.release_date || "Unknown",
+          country: data.production_countries?.[0]?.name || "Unknown",
+          language: data.original_language || "Unknown",
+          userRatings: [], // Initialize user ratings
+          reviews: [], // Initialize reviews
+        };
+
+        setMovie(movieDetails);
+
+        const inWatchlist = await api.isInWatchlist(data.id);
+        setIsInWatchlist(inWatchlist);
+      } catch (error) {
+        console.error("Failed to fetch movie details:", error);
+      }
+    };
+
+    fetchMovieDetails();
+  }, [id]);
+
+  const handleUserRating = (rating: number) => {
+    if (!movie) return;
+    setUserRating(rating);
+    setMovie((prev) =>
+      prev
+        ? {
+            ...prev,
+            userRatings: [...prev.userRatings, rating],
+          }
+        : null
+    );
+  };
+
+  const calculateUserAverageRating = () => {
+    if (!movie || movie.userRatings.length === 0) return 0;
+    const total = movie.userRatings.reduce((sum, r) => sum + r, 0);
+    return (total / movie.userRatings.length).toFixed(1);
+  };
+
+  const handleWatchlistToggle = async () => {
+    if (!movie) return;
+
+    if (isInWatchlist) {
+      await api.removeMovieFromWatchlist(movie.id);
+    } else {
+      await api.addMovieToWatchlist(movie);
+    }
+
+    setIsInWatchlist(!isInWatchlist);
+  };
+
+  const handleReviewSubmit = () => {
+    if (!reviewText || !username) return; // Prevent empty reviews or missing usernames
+    if (movie) {
+      const newReview: Review = {
+        username,
+        text: reviewText,
+        date: new Date().toLocaleDateString(),
+        upvotes: 0,
+        downvotes: 0,
+        isEditing: false,
+      };
+      setMovie((prev) => (prev ? { ...prev, reviews: [...prev.reviews, newReview] } : null));
+    }
+    setReviewText(""); // Clear review text after submission
+  };
+
+  const handleReviewEdit = (index: number) => {
+    setMovie((prev) =>
+      prev
+        ? {
+            ...prev,
+            reviews: prev.reviews.map((review, idx) =>
+              idx === index ? { ...review, isEditing: true } : review
+            ),
+          }
+        : null
+    );
+  };
+
+  const handleReviewSave = (index: number, newText: string) => {
+    setMovie((prev) =>
+      prev
+        ? {
+            ...prev,
+            reviews: prev.reviews.map((review, idx) =>
+              idx === index ? { ...review, text: newText, isEditing: false } : review
+            ),
+          }
+        : null
+    );
+  };
+
+  const handleReviewDelete = (index: number) => {
+    setMovie((prev) =>
+      prev
+        ? {
+            ...prev,
+            reviews: prev.reviews.filter((_, idx) => idx !== index),
+          }
+        : null
+    );
+  };
+
+  const handleUpvote = (index: number) => {
+    setMovie((prev) =>
+      prev
+        ? {
+            ...prev,
+            reviews: prev.reviews.map((review, idx) =>
+              idx === index ? { ...review, upvotes: review.upvotes + 1 } : review
+            ),
+          }
+        : null
+    );
+  };
+
+  const handleDownvote = (index: number) => {
+    setMovie((prev) =>
+      prev
+        ? {
+            ...prev,
+            reviews: prev.reviews.map((review, idx) =>
+              idx === index ? { ...review, downvotes: review.downvotes + 1 } : review
+            ),
+          }
+        : null
+    );
+  };
+
+  const sortedReviews = movie
+    ? movie.reviews.sort((a, b) => {
+        if (sortOption === "mostHelpful") {
+          return b.upvotes - b.downvotes - (a.upvotes - a.downvotes);
+        }
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      })
+    : [];
+
+  if (!movie) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-dark-navy">
+        <div className="animate-spin h-8 w-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+        <span className="ml-4 text-gray-200">Loading Movie Details...</span>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div className="relative h-[90vh]">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${movie.backdrop || movie.image})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80" />
-        </div>
+      {/* Movie Banner Section */}
+      <div
+        className="relative h-[90vh]"
+        style={{
+          backgroundImage: `url(${movie.backdrop || movie.image})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
 
-        <div className="relative container mx-auto px-4 h-full flex items-end pb-12">
-          <div className="grid md:grid-cols-3 gap-8 items-end">
-            <div className="hidden md:block">
+        <div className="relative container mx-auto h-full flex items-end pb-12 px-6 md:px-12">
+          <div className="grid md:grid-cols-3 gap-12">
+            <div className="flex justify-center">
               <img
                 src={movie.image}
                 alt={movie.title}
-                className="rounded-lg shadow-xl aspect-[2/3] object-cover"
+                className="rounded-lg shadow-2xl w-[150px] md:w-[370px]"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full">
-                  <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                  <span className="text-yellow-500 font-semibold">
-                    {movie.rating} Rating
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <span className="text-gray-300">{movie.duration}</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full">
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                  <span className="text-gray-300">{movie.releaseDate}</span>
-                </div>
-              </div>
+            <div className="md:col-span-2 text-white space-y-6">
+              <h1 className="text-5xl font-bold">{movie.title}</h1>
+              <p className="text-gray-300 text-lg">{movie.description}</p>
 
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                {movie.title}
-              </h1>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {movie.genre.map((g) => (
-                  <span
-                    key={g}
-                    className="px-3 py-1 bg-gray-800/80 backdrop-blur-sm rounded-full text-sm"
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex items-center space-x-4">
                 <a
-                  href={movie.trailer}
+                  href={`https://www.youtube.com/watch?v=${movie.trailer}`}
+                  className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 text-black px-6 py-3 rounded-lg font-semibold"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-yellow-500 text-black px-8 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-yellow-400 transition-colors"
                 >
                   <Play className="w-5 h-5" />
-                  Watch Trailer
+                  <span>Watch Trailer</span>
                 </a>
-                <button className="bg-gray-800/80 backdrop-blur-sm text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center gap-2">
-                  <Heart className="w-5 h-5" />
-                  Add to Watchlist
+
+                <button
+                  onClick={handleWatchlistToggle}
+                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    isInWatchlist
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-green-500 hover:bg-green-600 text-white"
+                  }`}
+                >
+                  {isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
                 </button>
-                <button className="bg-gray-800/80 backdrop-blur-sm text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors">
-                  <Share2 className="w-5 h-5" />
-                </button>
+                <p className="flex items-center space-x-2 bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 text-black px-6 py-3 rounded-lg font-semibold">
+                  Rating : {movie.rating.toFixed(1)} / 10
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <main className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="md:col-span-2">
-            <section className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">Overview</h2>
-              <p className="text-gray-300 text-lg leading-relaxed">
-                {movie.description}
-              </p>
-            </section>
 
-            <section className="mb-12">
-              <h2 className="text-2xl font-bold mb-6">Awards & Recognition</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {movie.awards.map((award, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg"
-                  >
-                    <Award className="w-5 h-5 text-yellow-500" />
-                    <span>{award}</span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-3 bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg">
-                  <BarChart3 className="w-5 h-5 text-green-500" />
-                  <span>Metacritic: {movie.metacriticScore}/100</span>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg">
-                  <BarChart3 className="w-5 h-5 text-red-500" />
-                  <span>Rotten Tomatoes: {movie.rottenTomatoesScore}%</span>
-                </div>
-              </div>
-            </section>
-            <section>
-              <h2 className="text-2xl font-bold mb-6">Top Cast</h2>
-              <div className="grid grid-cols-2 gap-6">
-                {movie.cast.map((actor) => (
-                  <Link
-                    key={actor.id}
-                    to={`/actor/${actor.id}`}
-                    className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 hover:bg-gray-700/50 transition-colors flex gap-4"
-                  >
-                    <img
-                      src={actor.image}
-                      alt={actor.name}
-                      className="w-24 h-24 rounded-xl object-cover"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1">
-                        {actor.name}
-                      </h3>
-                      <p className="text-gray-400 mb-2">{actor.role}</p>
-                      <p className="text-sm text-gray-400 line-clamp-2">
-                        {actor.bio}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
+      {/* Movie Info Section */}
+      <div className="container mx-auto mt-8">
+        <h2 className="text-2xl font-bold mb-4">Movie Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#001F3F] p-4 rounded-lg shadow-md flex items-center gap-4">
+            <Film className="text-yellow-400 text-2xl" />
+            <div>
+              <p className="text-lg font-bold">Director</p>
+              <p>{movie.director}</p>
+            </div>
           </div>
-
-          <div>
-            <div className="sticky top-24 space-y-6">
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
-                <h3 className="font-semibold mb-4">Movie Info</h3>
-                <dl className="space-y-4">
-                  <div>
-                    <dt className="text-gray-400">Director</dt>
-                    <dd>{movie.director}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-400">Production Company</dt>
-                    <dd>{movie.productionCompany}</dd>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <dt className="text-gray-400">Box Office</dt>
-                    <dd className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4 text-green-500" />
-                      {movie.boxOffice}
-                    </dd>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <dt className="text-gray-400">Language</dt>
-                    <dd className="flex items-center gap-1">
-                      <Globe className="w-4 h-4 text-blue-500" />
-                      {movie.language}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+          <div className="bg-[#001F3F] p-4 rounded-lg shadow-md flex items-center gap-4">
+            <Calendar className="text-yellow-400 text-2xl" />
+            <div>
+              <p className="text-lg font-bold">Release Date</p>
+              <p>{movie.releaseDate}</p>
+            </div>
+          </div>
+          <div className="bg-[#001F3F] p-4 rounded-lg shadow-md flex items-center gap-4">
+            <DollarSign className="text-yellow-400 text-2xl" />
+            <div>
+              <p className="text-lg font-bold">Box Office</p>
+              <p>{movie.boxOffice}</p>
             </div>
           </div>
         </div>
-      </main>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+          <div className="bg-[#001F3F] p-4 rounded-lg shadow-md flex items-center gap-4">
+            <Globe className="text-yellow-400 text-2xl" />
+            <div>
+              <p className="text-lg font-bold">Country</p>
+              <p>{movie.country}</p>
+            </div>
+          </div>
+          <div className="bg-[#001F3F] p-4 rounded-lg shadow-md flex items-center gap-4">
+            <Clock className="text-yellow-400 text-2xl" />
+            <div>
+              <p className="text-lg font-bold">Duration</p>
+              <p>{movie.duration}</p>
+            </div>
+          </div>
+          <div className="bg-[#001F3F] p-4 rounded-lg shadow-md flex items-center gap-4">
+            <Languages className="text-yellow-400 text-2xl" />
+            <div>
+              <p className="text-lg font-bold">Language</p>
+              <p>{movie.language}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+{/* Rating Section */}
+<div className="container mx-auto mt-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-200">Rate This Movie</h2>
+        <div className="bg-[#001F3F] p-6 rounded-lg shadow-lg text-gray-200">
+          <h3 className="text-lg font-semibold mb-4">Your Rating (1-10)</h3>
+          <div className="flex space-x-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+              <button
+                key={num}
+                onClick={() => handleUserRating(num)}
+                className={`px-3 py-2 rounded-full text-sm ${
+                  userRating === num
+                    ? "bg-yellow-500 text-black"
+                    : "bg-gray-700 hover:bg-yellow-400 hover:text-black"
+                }`}
+              >
+                {num}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm mt-4">
+            Average User Rating: {calculateUserAverageRating()} / 10
+          </p>
+        </div>
+      </div>
+      {/* Movie Cast Section */}
+      <div className="container mx-auto mt-12">
+        <h2 className="text-3xl font-bold mb-6 text-gray-200">Top Cast</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
+          {movie.cast.map((actor) => (
+            <Link to={`/actor/${actor.id}`} key={actor.id}>
+              <div className="bg-[#001F3F] hover:bg-[#003366] transition-all duration-300 rounded-lg shadow-lg overflow-hidden group">
+                <img
+                  src={actor.image}
+                  alt={actor.name}
+                  className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="p-4 text-center">
+                  <h3 className="font-bold text-lg text-gray-200 group-hover:text-yellow-400">
+                    {actor.name}
+                  </h3>
+                  <p className="text-sm text-gray-400 mt-1">{actor.role}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Reviews and User Rating */}
+
+      <div className="container mx-auto mt-8">
+        <h2 className="text-2xl font-bold mb-4">User Reviews</h2>
+
+        {/* Sorting Options */}
+        <div className="mb-4">
+          <button
+            onClick={() => setSortOption("mostHelpful")}
+            className={`px-4 py-2 rounded-lg ${
+              sortOption === "mostHelpful" ? "bg-yellow-500" : "bg-gray-700"
+            }`}
+          >
+            Most Helpful
+          </button>
+          <button
+            onClick={() => setSortOption("mostRecent")}
+            className={`px-4 py-2 ml-2 rounded-lg ${
+              sortOption === "mostRecent" ? "bg-yellow-500" : "bg-gray-700"
+            }`}
+          >
+            Most Recent
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {sortedReviews.map((review, idx) => (
+            <div key={idx} className="bg-[#001F3F] p-4 rounded-lg shadow-md">
+              <p className="text-lg font-semibold">{review.username}</p>
+              <p className="text-sm text-gray-400">{review.date}</p>
+
+              {/* Editing Review */}
+              {review.isEditing ? (
+                <div>
+                  <textarea
+                    value={review.text}
+                    onChange={(e) =>
+                      handleReviewSave(idx, e.target.value)
+                    }
+                    className="w-full p-2 rounded-md"
+                  />
+                  <button
+                    onClick={() => handleReviewSave(idx, review.text)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-3 rounded-lg font-semibold mt-2"
+                  >
+                    Save
+                  </button>
+                </div>
+              ) : (
+                <p className="mt-2">{review.text}</p>
+              )}
+
+              {/* Review Actions */}
+              <div className="flex items-center mt-2 space-x-4">
+              <button
+  onClick={() => handleUpvote(idx)}
+  className="text-yellow-400 flex items-center space-x-2"
+>
+  <ThumbsUp className="w-5 h-5" />
+  <span>Upvote ({review.upvotes})</span>
+</button>
+
+<button
+  onClick={() => handleDownvote(idx)}
+  className="text-red-400 flex items-center space-x-2"
+>
+  <ThumbsDown className="w-5 h-5" />
+  <span>Downvote ({review.downvotes})</span>
+</button>
+
+<button
+  onClick={() => handleReviewEdit(idx)}
+  className="text-yellow-400 flex items-center space-x-2"
+>
+  <Edit className="w-5 h-5" />
+  <span>Edit</span>
+</button>
+
+<button
+  onClick={() => handleReviewDelete(idx)}
+  className="text-red-400 flex items-center space-x-2"
+>
+  <Trash className="w-5 h-5" />
+  <span>Delete</span>
+</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-xl font-bold">Add Your Review</h3>
+          <div className="space-y-4">
+          <input
+  type="text"
+  placeholder="Your name"
+  value={username}
+  onChange={(e) => setUsername(e.target.value)}
+  className="w-full p-2 rounded-md text-gray-900 dark:text-gray-100 bg-gray-800 dark:bg-gray-900 border border-gray-600 dark:border-gray-400"
+/>
+
+<textarea
+  placeholder="Write your review here"
+  value={reviewText}
+  onChange={(e) => setReviewText(e.target.value)}
+  className="w-full p-2 rounded-md text-gray-900 dark:text-gray-100 bg-gray-800 dark:bg-gray-900 border border-gray-600 dark:border-gray-400"
+/>
+            <button
+              onClick={handleReviewSubmit}
+              className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-3 rounded-lg font-semibold"
+            >
+              Submit Review
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
